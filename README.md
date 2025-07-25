@@ -1,6 +1,6 @@
 # ChatClone
 
-仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现公众平台消息转发
+仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现微信、飞书等平台消息转发
 
 在阅读完 README 并配置好环境后，你的文件结构应该是
 
@@ -9,9 +9,12 @@ ChatClone
 ├── AstrBot
 ├── LLaMA-Factory
 ├── dataset
+├── img
+├── train.sh
 ├── api_test.sh
 ├── inference.yaml
-└── README.md
+├── README.md
+└── .gitignore
 ```
 
 ## LLaMA-Factory
