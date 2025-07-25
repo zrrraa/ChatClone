@@ -1,6 +1,6 @@
 # ChatClone
 
-仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现微信、飞书等平台消息转发，从聊天记录出发打造一个自己的数字克隆人
+> 仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现微信、飞书等平台消息转发，从聊天记录出发打造一个自己的数字克隆人
 
 在阅读完 README 并配置好环境后，你的文件结构应该是
 
@@ -43,15 +43,17 @@ cd ..
 
 使用 [PyWxDump](https://github.com/xaoyaoo/PyWxDump) 完成微信聊天记录的提取。可直接下载 [releases](https://github.com/xaoyaoo/PyWxDump/releases/tag/v3.1.45) 中的 exe 文件。PyWxDump 可以自动解密已登录在电脑上的微信，解密后点开各个聊天窗口，选择导出聊天记录为 CSV 格式。
 
-每个窗口的聊天记录导出后均储存在 /csv/wxid 下，将整个 csv 文件夹复制到本项目的 dataset 中，在 blocked_words.json 中添加隐私信息屏蔽词，然后调用 python 脚本将所有聊天记录整合为一个 json 文件。
+每个窗口的聊天记录导出后均储存在 /csv/wxid 下，将整个 csv 文件夹复制到本项目的 dataset 中，在 blocked_words.json 中添加隐私信息屏蔽词
+
+修改 csv_to_json_sharegpt.py 中的 system_prompt，然后运行。脚本会把所有聊天记录划分为多个多轮对话，整理成 sharegpt 格式的数据集
 
 ```bash
 cd dataset
-python csv_to_json_with_history.py
+python csv_to_json_sharegpt.py
 cd ..
 ```
 
-输出的 json 文件在 `../LLaMA-Factory/data/chat_test.json`
+输出的 json 文件在 `../LLaMA-Factory/data/chat_sharegpt.json`
 
 ### 微调
 
@@ -110,4 +112,5 @@ python main.py
 
 一切结束后，你就拥有了一个自己的克隆人啦
 
-![final](./img/final.jpg)
+![1](./img/1.jpg)
+![2](./img/2.jpg)

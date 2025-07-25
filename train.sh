@@ -18,9 +18,9 @@ llamafactory-cli train \
     --finetuning_type lora \
     --template qwen \
     --flash_attn auto \
-    --dataset_dir data \
+    --dataset_dir LLaMA-Factory/data \
     --dataset wechat \
-    --cutoff_len 256 \
+    --cutoff_len 512 \
     --learning_rate 5e-05 \
     --num_train_epochs 3.0 \
     --max_samples 100000 \
@@ -29,8 +29,8 @@ llamafactory-cli train \
     --lr_scheduler_type cosine \
     --max_grad_norm 1.0 \
     --logging_steps 5 \
-    --save_steps 300 \
-    --warmup_steps 200 \
+    --save_steps 500 \
+    --warmup_steps 300 \
     --packing False \
     --enable_thinking False \
     --report_to none \

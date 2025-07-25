@@ -37,6 +37,8 @@ print(f'当前处理目录{csv_folder}')
 #     for chat_obj_folder in os.listdir(csv_folder):
 #         chat_obj_folder_path = os.path.join(csv_folder, chat_obj_folder)
 #         for csvfile in os.listdir(chat_obj_folder_path):
+#             if not csvfile.endswith('.csv'):
+#                 continue
 #             csvfile_path = os.path.join(chat_obj_folder_path, csvfile)
 #             chat_df = handle_pt_csv(csvfile_path)
 #             csv_res.append(chat_df)
@@ -44,21 +46,21 @@ print(f'当前处理目录{csv_folder}')
 #     csv_res = pd.concat(csv_res)
 #     csv_res = csv_res.apply(lambda x: {'c': x})  # 设置数据集prompt键为c
 
-#     csv_res.to_json('./data/res_csv/pt.json', orient='records', force_ascii=False)
+#     csv_res.to_json('./data/res_csv/pt-my.json', orient='records', force_ascii=False)
 
 
 def handle_sft_csv(csvfile):
     chat_df = pd.read_csv(csvfile)
-    blocked_words = json.load(open('./blocked_words.json'))['blocked_words']
+    blocked_words = json.load(open('./blocked_words.json', encoding='utf-8'))['blocked_words']
     # 选择type_name为文本的行、is_sender为1的行
     # 需要保留的type_name字段名
     type_list = ['文本', '图片', '卡片式链接', '合并转发的聊天记录', '视频', '语言', '未知', '分享的小程序']
     chat_df = chat_df[chat_df['type_name'].isin(values=type_list)]
 
-    # 对每一行的content进行处理 转为dict 再取'msg'字段
     # chat_df['content'] = chat_df['content'].apply(func=lambda x: json.loads(x)['msg'])
     chat_df['content'] = chat_df['msg']
-    # 如果type_name为文本 并且content 包含 手机号、身份证号、邮箱、网址则删除这行 用循环删除
+
+    # 如果type_name为文本 并且content 包含 手机号、身份证号、邮箱、网址则删除这行
     for i in chat_df.index:
         if chat_df.loc[i, 'type_name'] == '文本':
             if ('1\d{10}' in chat_df.loc[i, 'content'] or
@@ -74,7 +76,6 @@ def handle_sft_csv(csvfile):
                     chat_df = chat_df.drop(index=i)
                     break
         else:
-            # content赋值为空
             chat_df.loc[i, 'content'] = ''
 
     chat_df = chat_df[['is_sender', 'type_name', 'content', 'CreateTime']]
@@ -92,17 +93,14 @@ def handle_sft_csv(csvfile):
     last_CreateTime = chat_df.iloc[0]['CreateTime']
     # 超时处理 半天没说话就重新开始
     # 注意这里只是处理了组装成一个句子 最后封装对话、配对在make_sft_dataset
-
     # 遇到图片 连接 直接封装成一个句子
     for i, row in chat_df.iterrows():
-        if '跟最终成绩差1分' in row['content']:
-            pass
         if row['type_name'] in skip_list:
             if last_content != '':
-                if last_content[-1] == '，':
-                    last_content = last_content[:-1] + '。'
-                elif last_content[-1] not in ['。', '！', '？', '…', '.']:
-                    last_content += '。'
+                # if last_content[-1] == '，':
+                #     last_content = last_content[:-1] + '。'
+                # elif last_content[-1] not in ['。', '！', '？', '…', '.']:
+                #     last_content += '。'
                 res_df.append({'is_sender': last_is_sender, 'content': last_content, 'CreateTime': last_CreateTime})
                 last_CreateTime = row['CreateTime']
                 last_content = ''
@@ -117,8 +115,11 @@ def handle_sft_csv(csvfile):
         if row['is_sender'] == last_is_sender:
             if row['CreateTime'] - last_CreateTime > pd.Timedelta(value='1h'):
                 # 如果超时 前面的添加到res_df 并重新开始
+                # if last_content[-1] == '，':
+                #     last_content = last_content[:-1] + '。'
+                # elif last_content[-1] not in ['。', '！', '？', '…', '.']:
+                #     last_content += '。'
                 res_df.append({'is_sender': last_is_sender, 'content': last_content, 'CreateTime': last_CreateTime})
-                res_df.append({'is_sender': last_is_sender, 'content': 'cut', 'CreateTime': last_CreateTime})
                 last_content = row['content']
                 last_CreateTime = row['CreateTime']
                 continue
@@ -128,18 +129,21 @@ def handle_sft_csv(csvfile):
             last_content = last_content + row['content']
             last_CreateTime = row['CreateTime']
         else:
+            # if last_content[-1] == '，':
+            #     last_content = last_content[:-1] + '。'
+            # elif last_content[-1] not in ['。', '！', '？', '…', '.']:
+            #     last_content += '。'
             res_df.append({'is_sender': last_is_sender, 'content': last_content, 'CreateTime': last_CreateTime})
-            if row['CreateTime'] - last_CreateTime > pd.Timedelta(value='1h'):
-                res_df.append({'is_sender': last_is_sender, 'content': 'cut', 'CreateTime': last_CreateTime})
             last_is_sender = row['is_sender']
             last_content = row['content']
             last_CreateTime = row['CreateTime']
     res_df = pd.DataFrame(res_df)
     return res_df
 
+
 def make_sft_dataset():
 
-    #     [
+    #  [
     #   {
     #     "instruction": "用户指令（必填）",
     #     "input": "用户输入（选填）",
@@ -153,10 +157,13 @@ def make_sft_dataset():
     # ]
 
     csv_concat = []
+    csv_res = []
     # csv文件夹里全是不同聊天对象文件夹 每个文件夹里是csv文件 先遍历不同聊天对象文件夹 再遍历聊天对象的csv文件
     for chat_obj_folder in os.listdir(csv_folder):
         chat_obj_folder_path = os.path.join(csv_folder, chat_obj_folder)
         for csvfile in os.listdir(chat_obj_folder_path):
+            if not csvfile.endswith('.csv'):
+                continue
             csvfile_path = os.path.join(chat_obj_folder_path, csvfile)
             chat_df = handle_sft_csv(csvfile_path)
             csv_concat.append(chat_df)
@@ -165,71 +172,45 @@ def make_sft_dataset():
     # csv_res里is_sender必须是01 01 01 的顺序 csv_concat里不一定是01 01
     # 相差超过1小时的时间戳分为不同的对话
     # temp_res为一个长度为2的队列
-    temp_chat_item = deque(maxlen=2)
-    qa_list = []
-
+    temp_res = deque(maxlen=2)
     # 6种情况
     # temp_res 为空  遇到 0入队 遇到1不处理 遇到cut不处理
-    # temp_res 有0  遇到0清空队列再入队 遇到1入队再全部出队 遇到cut清空队列
-
-    # 选最长的做为问题的结果？
+    # temp_res 有0  遇到0清空队列再入队 遇到1相差超过1小时清空队列 没有相差一小时入队再全部出队 遇到cut清空队列
 
     for i, row in csv_concat.iterrows():
-        if len(temp_chat_item) == 0:
+        if len(temp_res) == 0:
             if row['content'] == 'cut':
-                qa_list.append('cut')
                 continue
             if row['is_sender'] == 0:
-                temp_chat_item.append(row['content'])
+                temp_res.append(row['content'])
+                last_CreateTime = row['CreateTime']
             else:
                 continue
-        elif len(temp_chat_item) == 1:
+        elif len(temp_res) == 1:
             if row['content'] == 'cut':
-                qa_list.append('cut')
-                temp_chat_item.clear()
+                temp_res.clear()
+                last_CreateTime = row['CreateTime']
             elif row['is_sender'] == 0:
                 # 遇到0 清空队列再入队
-                temp_chat_item.clear()
-                temp_chat_item.append(row['content'])
+                temp_res.clear()
+                temp_res.append(row['content'])
+                last_CreateTime = row['CreateTime']
             else:
-                temp_chat_item.append(row['content'])
-                temp_output_list = temp_chat_item[1].split('，')
-                output = max(temp_output_list, key=len)
-                if output[-1] == '。':
-                    output = output[:-1]
-                qa_list.append({'input': temp_chat_item[0], 'output': output})
-                # csv_res.append({'instruction': temp_chat_item[0], 'output': output, 'system': '请你扮演一名人类，不要说自己是人工智能'})
-                temp_chat_item.clear()
-
-    csv_res = []
-    system_prompt = '请你扮演一个叫“钟睿”的人类和他人进行对话，不要说自己是人工智能或者某个模型'
-
-    last_res = {'input': '', 'output': '',
-                'instruction': system_prompt,
-                'history': []}
-    for i, qa in enumerate(qa_list):
-        if qa == 'cut':
-            if len(last_res['history']) == 0:
-                continue
-            else:
-                if len(last_res['history']) == 1:
-                    last_res = {'input': last_res['history'][0][0], 'output': last_res['history'][0][1],
-                                'instruction': system_prompt,'history': []}
+                if row['CreateTime'] - last_CreateTime > pd.Timedelta('1h'):
+                    # 相差超过1小时清空队列
+                    temp_res.clear()
+                    last_CreateTime = row['CreateTime']
                 else:
-                    last_res = {'input': last_res['history'][-1][0], 'output': last_res['history'][-1][1],
-                                'instruction': system_prompt,
-                                'history': last_res['history'][:-1]}
-                csv_res.append(last_res)
-                last_res = {'input': '', 'output': '',
-                            'instruction': system_prompt,
-                            'history': []}
-        else:
-            last_res['history'].append([qa['input'], qa['output']])
+                    # 没有相差一小时入队再全部出队
+                    temp_res.append(row['content'])
+                    csv_res.append({'instruction': '', 'input': temp_res[0], 'output': temp_res[1]})
+                    temp_res.clear()
+                    last_CreateTime = row['CreateTime']
 
 
     csv_res_df = pd.DataFrame(csv_res)
-    print(f'数据量：{csv_res_df.shape[0]}')
-    csv_res_df.to_json('../LLaMA-Factory/data/chat_test.json', orient='records', force_ascii=False)
+    print(f'处理后数据量：{csv_res_df.shape[0]}')
+    csv_res_df.to_json('../LLaMA-Factory/data/chat_alpaca.json', orient='records', force_ascii=False)
 
 
 if __name__ == '__main__':
