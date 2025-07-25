@@ -1,6 +1,6 @@
 # ChatClone
 
-仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现微信、飞书等平台消息转发
+仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现微信、飞书等平台消息转发，从聊天记录出发打造一个自己的数字克隆人
 
 在阅读完 README 并配置好环境后，你的文件结构应该是
 
