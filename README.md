@@ -2,6 +2,8 @@
 
 > 仿造 [WeClone](https://github.com/xming521/WeClone) 项目，使用 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) 微调及部署大模型，[AstrBot](https://github.com/AstrBotDevs/AstrBot) 实现微信、飞书等平台消息转发，从聊天记录出发打造一个自己的数字克隆人
 
+<img src="./img/1.jpg" height="600"><img src="./img/2.jpg" height="600">
+
 在阅读完 README 并配置好环境后，你的文件结构应该是
 
 ```
@@ -111,6 +113,3 @@ python main.py
 ![prompt](./img/prompt.jpg)
 
 一切结束后，你就拥有了一个自己的克隆人啦
-
-![1](./img/1.jpg)
-![2](./img/2.jpg)
